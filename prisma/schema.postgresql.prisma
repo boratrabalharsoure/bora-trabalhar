@@ -1,0 +1,75 @@
+// Prisma schema para produção (PostgreSQL)
+// Use este schema no build do Netlify
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "./app/generated/prisma"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo de Usuários
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  phone     String?
+  role      String   @default("user") // "user" ou "admin"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamento com solicitações
+  requests Request[]
+
+  @@map("users")
+}
+
+// Modelo de Bairros
+model Neighborhood {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  // Relacionamento com solicitações
+  requests Request[]
+
+  @@map("neighborhoods")
+}
+
+// Modelo de Tipos de Serviços
+model ServiceType {
+  id          Int    @id @default(autoincrement())
+  name        String @unique
+  description String?
+  icon        String?
+
+  // Relacionamento com solicitações
+  requests Request[]
+
+  @@map("service_types")
+}
+
+// Modelo de Solicitações
+model Request {
+  id            Int      @id @default(autoincrement())
+  address       String
+  description   String
+  status        String   @default("Pendente") // "Pendente", "Em andamento", "Concluído", "Cancelado"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  executionDate DateTime?
+  protocol      String?  @unique
+
+
+  userId          Int
+  user            User         @relation(fields: [userId], references: [id])
+  neighborhoodId  Int
+  neighborhood    Neighborhood @relation(fields: [neighborhoodId], references: [id])
+  serviceTypeId   Int
+  serviceType     ServiceType  @relation(fields: [serviceTypeId], references: [id])
+
+  @@map("requests")
+}
